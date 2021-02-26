@@ -3,23 +3,23 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
 
+## lstm在4个epoch时准确度到了90%，rnn在14个epoch时准确度才能达到90%
+class Rnn(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.rnn = nn.RNN(input_size=28, hidden_size=64, num_layers=1, batch_first=True)
+        self.afine = nn.Linear(64, 10)
 
-# class Rnn(nn.Module):
-#     def __init__(self):
-#         super().__init__()
-#         self.rnn = nn.RNN(input_size=28, hidden_size=64, num_layers=1, batch_first=True)
-#         self.afine = nn.Linear(64, 10)
-#
-#     def forward(self, x):
-#         #True： NSV N：batchsize S: sequence 序列长度(一共有多少个序列） V：input size（每个序列的维度）。False：SNV
-#         x = x.reshape(-1, 28, 28)
-#         batch = x.shape[0]
-#         # 方向*层数， N：batchsize， hidden_size
-#         h0 = torch.zeros(1, batch, 64)
-#         output, _ = self.rnn(x, h0)
-#         output = output[:, -1, :]
-#         output = self.afine(output)
-#         return output
+    def forward(self, x):
+        #True： NSV N：batchsize S: sequence 序列长度(一共有多少个序列） V：input size（每个序列的维度）。False：SNV
+        x = x.reshape(-1, 28, 28)
+        batch = x.shape[0]
+        # 方向*层数， N：batchsize， hidden_size
+        h0 = torch.zeros(1, batch, 64)
+        output, _ = self.rnn(x, h0)
+        output = output[:, -1, :]
+        output = self.afine(output)
+        return output
 
 
 class LSTM(nn.Module):
@@ -29,7 +29,7 @@ class LSTM(nn.Module):
         self.afine = nn.Linear(64, 10)
 
     def forward(self, x):
-        #True： NSV N：batchsize S: sequence 序列长度 V：input size。False：SNV
+        #True： NSV N：batchsize S: sequence 序列长度(一共有多少个序列） V：input size。False：SNV
         x = x.reshape(-1, 28, 28)
         batch = x.shape[0]
         # 方向*层数， N：batchsize， hidden_size
@@ -42,11 +42,13 @@ class LSTM(nn.Module):
         return output
 
 # 数据加载
-batchsize = 100
+batchsize = 1000
 num_epoch = 14
 lr = 0.01
 
 data_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5], [0.5])])
+data_transform = transforms.Compose([transforms.ToTensor()])
+
 train_dataset = datasets.MNIST(root="MNIST_data", train=True, transform=data_transform, download=False)
 test_dataset = datasets.MNIST(root="MNIST_data", train=False, transform=data_transform, download=False)
 train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batchsize)
@@ -59,11 +61,11 @@ test_loader = DataLoader(test_dataset, shuffle=True, batch_size=batchsize)
 #     print(x, y)
 
 # 模型加载
-# mynet = Rnn()
+mynet = Rnn()
 mynet = LSTM()
 
 loss_fn = nn.CrossEntropyLoss()
-opt = torch.optim.SGD(mynet.parameters(), lr=lr)
+opt = torch.optim.Adam(mynet.parameters())
 
 # 训练测试数据
 if __name__ =="__main__":
@@ -89,8 +91,6 @@ if __name__ =="__main__":
                 print("epoch:{}, batch:{}, loss:{}".format(epoch, i, loss))
             mynet.eval()
 
-
-
         loss = 0
         Accuracy = 0
         for data in test_loader:
@@ -112,6 +112,7 @@ if __name__ =="__main__":
             y_pred = out.max(dim=1).indices
             # y_pred = torch.argmax(out, 1)
             Accuracy += (y_pred == y_test).sum()
+            # print(torch.mean(torch.eq(test_ids, ys)))
 
         print(y_pred)
         print(y_test)

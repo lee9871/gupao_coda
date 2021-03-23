@@ -12,7 +12,7 @@ class ShffleBlock(nn.Module):
         c, n, h, w = x.shape
         y = x.reshape(c, self.groups, n//self.groups, h, w)
         z = y.permute(0, 2, 1, 3, 4)
-        v = y.reshape(c, n ,h, w)
+        v = y.reshape(c, n, h, w)
         return v
 
 if __name__=="__main__":

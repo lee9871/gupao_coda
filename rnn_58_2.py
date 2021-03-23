@@ -9,7 +9,7 @@ class Rnn(nn.Module):
         self.afine = nn.Linear(64, 10)
 
     def forward(self, x):
-        #True： NSW N：batchsize S: sequence 序列长度 V：input size。False：SNV
+        #True： NSW N：batchsize S: sequence 序列长度 V：input size（词向量维度）。False：SNV
         x = x.reshape(-1, 28, 28)
         batch = x.shape[0]
         # 方向*层数， N：batchsize， hidden_size
